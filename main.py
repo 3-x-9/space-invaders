@@ -5,8 +5,12 @@ import math
 def main():
     canvas = tkinter.Canvas(width=800, height=800)
     canvas.config(background="gray")
+
+    canvas.create_line(801, 100, 700, 100)
+
+
+
     canvas.pack()
-    get_triangle(canvas, 400, 250, 150, 300, -135)
     canvas.mainloop()
 
 
