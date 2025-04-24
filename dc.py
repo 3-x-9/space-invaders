@@ -409,7 +409,7 @@ def check_enemy(enemy_list, width, height):
             take_life()
             continue
 
-        if len(enemy_cords) >= 2 and enemy_cords[0] > 1200 or enemy_cords[0] < 150:
+        if len(enemy_cords) >= 2 and (enemy_cords[0] > 1200 or enemy_cords[0] < 150):
             canvas.delete(enemy)
             if enemy in enemy_list:
                 enemy_list.remove(enemy)
@@ -498,7 +498,7 @@ def check_boss_enemy(enemy_list, width, height):
                     continue
 
 def take_enemy_hp(cords):
-    global lvl5_hp
+    global lvl5_hp, after_calls
     lvl5_hp.pop()
     print(lvl5_hp)
     create_hp_bar(lvl5_hp)
@@ -529,8 +529,8 @@ def create_hp_bar(hp_list):
             green_hp = canvas.create_line(hp_x_start, hp_y_start, hp_x_end_green, hp_y_end, fill="green", width=10, tags="hp_bar")
         if len(hp_list) == 0:
             canvas.delete("enemy")
-        canvas.after(50, create_hp_bar, hp_list)
-
+        hp_bar_call = canvas.after(50, create_hp_bar, hp_list)
+        after_calls.append(hp_bar_call)
 
 def is_collision(box1, box2):
     # box format: [x1, y1, x2, y2]
@@ -610,7 +610,7 @@ def lvl3():
     enemy_spawn_delay = 1000
     waves = 5
 
-    spawn_basic_enemy(enemy_count, enemy_spawn_delay, waves)
+    spawn_targeting_enemy(enemy_count, enemy_spawn_delay, waves)
     start_collision_loop()
 
 
@@ -618,11 +618,13 @@ def lvl4():
     global spawning_active
     clear_canvas()
     spawning_active = True
-    enemy_count = 10
+    tatgeting_enemy_count = 5
+    enemy_count = 8
     enemy_spawn_delay = 500
     waves = 5
 
-    spawn_targeting_enemy(enemy_count, enemy_spawn_delay, waves)
+    spawn_targeting_enemy(tatgeting_enemy_count, enemy_spawn_delay, waves)
+    spawn_basic_enemy(enemy_count, enemy_spawn_delay, waves)
     start_collision_loop()
 
 
