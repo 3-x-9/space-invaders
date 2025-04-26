@@ -1,89 +1,44 @@
-import tkinter as tk
-import random
+from tkinter import *
 
-WIDTH = 600
-HEIGHT = 400
-LANE_COUNT = 3
-ROAD_COLOR = "#222"
-LINE_COLOR = "white"
-CAR_COLOR = "red"
-FPS = 30
+canvas = Canvas(width=1200, height=800)
 
-class Game:
-    def __init__(self, root):
-        self.root = root
-        self.canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="green")
-        self.canvas.pack()
+# legs
+canvas.create_oval(350, 500, 550, 700)
 
-        self.road_lines = []
-        self.speed = 5
-        self.car_pos = 1  # Center lane (0=left, 1=center, 2=right)
+# body
+canvas.create_oval(375, 350, 525, 500)
+canvas.create_oval(325, 400, 375, 450)
+canvas.create_oval(525, 400, 575, 450)
 
-        # Road perspective setup
-        self.road_center = WIDTH // 2
-        self.road_width = WIDTH * 0.6
-        self.horizon = HEIGHT // 3
+# head
+canvas.create_oval(400, 250, 500, 350)
 
-        # Car drawing
-        self.car = self.canvas.create_polygon(0, 0, 0, 0, 0, 0, fill=CAR_COLOR)
+# dots
+for dot in range(6):
+    y = 650 - 55*dot
+    canvas.create_oval(440, y - 10, 460, y+10, fill="black")
 
-        self.root.bind("<Left>", self.move_left)
-        self.root.bind("<Right>", self.move_right)
+# nose
+canvas.create_line(450, 285, 450, 315, fill="red", width=10)
 
-        self.generate_lines()
-        self.draw_car()
-        self.update()
+# eyes
+canvas.create_oval(425, 265, 440, 280, fill="black")
+canvas.create_oval(465, 265, 480, 280, fill="black")
 
-    def move_left(self, event):
-        if self.car_pos > 0:
-            self.car_pos -= 1
+# mouth
+canvas.create_oval(425, 325, 475, 340)
 
-    def move_right(self, event):
-        if self.car_pos < LANE_COUNT - 1:
-            self.car_pos += 1
+# hat
+canvas.create_oval(375, 200, 525, 235, width=5)
+canvas.create_rectangle(400, 185, 500, 250, fill="black")
 
-    def generate_lines(self):
-        for i in range(20):
-            self.road_lines.append({
-                "z": i * 20,
-            })
+# stick
+canvas.create_line(575, 700, 575, 325, fill="brown", width=10)
 
-    def project(self, z):
-        scale = 300 / (z + 1)
-        x = self.road_center
-        w = self.road_width * scale / 300
-        y = HEIGHT - (scale * 1.5)
-        return (x - w, y, x + w, y)
+canvas.create_line(575, 325, 550, 275, fill="brown", width=10)
+canvas.create_line(575, 325, 600, 275, fill="brown", width=10)
+canvas.create_line(575, 325, 575, 275, fill="brown", width=10)
 
-    def draw_car(self):
-        lane_width = self.road_width / LANE_COUNT
-        car_width = 40
-        car_height = 60
+canvas.pack()
+canvas.mainloop()
 
-        # Car is always drawn near bottom of screen
-        lane_x = self.road_center - self.road_width/2 + lane_width * self.car_pos + lane_width/2
-        x1 = lane_x - car_width/2
-        x2 = lane_x + car_width/2
-        y1 = HEIGHT - car_height - 20
-        y2 = HEIGHT - 20
-
-        self.canvas.coords(self.car, x1, y2, x2, y2, (x1+x2)//2, y1)
-
-    def update(self):
-        self.canvas.delete("line")
-
-        for line in self.road_lines:
-            line["z"] -= self.speed
-            if line["z"] < 1:
-                line["z"] += 400  # Reset line to far distance
-
-            x1, y1, x2, y2 = self.project(line["z"])
-            self.canvas.create_line(x1, y1, x2, y2, fill=LINE_COLOR, width=2, tags="line")
-
-        self.draw_car()
-        self.root.after(int(1000 / FPS), self.update)
-
-root = tk.Tk()
-root.title("Pseudo-3D Front POV Car Game")
-game = Game(root)
-root.mainloop()

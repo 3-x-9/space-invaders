@@ -3,8 +3,9 @@ import random
 from PIL import Image, ImageTk
 from idlelib.tooltip import Hovertip
 
-window_width = 1200
-window_height = 720
+scale_x = 1550
+scale_y = 820
+
 endgame_label = None
 score_label_obj = None
 game_over = False
@@ -46,10 +47,19 @@ boss_move_after1 = None
 
 def main():
     global window, canvas, multishot_button, battleship, basic_enemy_alien, shot_cd_button, heart, battleship_sprite,\
-        player_x, player_y, targeting_enemy_img, score, boss_enemy_img, bomb_img, explosion_img
+        player_x, player_y, targeting_enemy_img, score, boss_enemy_img, bomb_img, explosion_img, scale_x, scale_y
 
     window = Tk()
-    canvas = Canvas(window, width=1550, height=820, bg="black")
+
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+
+    scale_x = screen_width / 1550
+    scale_y = screen_height / 820
+
+    window.geometry(f"{screen_width}x{screen_height}")
+
+    canvas = Canvas(window, width=screen_width, height=screen_height, bg="black")
 
     # battleship
     battleship = resize_image("battleship.png", 100, 100)
@@ -74,11 +84,6 @@ def main():
 
     canvas_background = canvas.create_image(0, 0, image=background, anchor="nw")
     canvas.tag_lower(canvas_background)
-
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-
-    window.geometry(f"{screen_width}x{screen_height}")
 
     window.bind("<Motion>", player_pos)
     window.bind("<space>", shoot)
@@ -127,18 +132,20 @@ def main():
     shot_cd_button.pack()
     buy_heart_button.pack()
 
-    canvas.create_line(200, 550, 1200, 550, fill="white")
-    canvas.create_rectangle(200, 2, 1200, 720, outline="white")
+    canvas.create_line(200 * scale_x, 550 * scale_y, 1200 * scale_x, 550 * scale_y, fill="white")
+    canvas.create_rectangle(200 * scale_x, 2 * scale_y, 1200 * scale_x, 720 * scale_y, outline="white")
     # 1200, 720
 
-    upgrade_frame.place(x=0, y=500)
+    upgrade_frame.place(x=0, y=(500 * scale_y))
     canvas.pack()
     lvl_frame.place(x=0, y=0)
     window.mainloop()
 
 
-def resize_image(path, width, height):
+def resize_image(path, rel_width, rel_height):
     original_img = Image.open(path)
+    width = int(canvas.winfo_width() * rel_width)
+    height = int(canvas.winfo_height() * rel_height)
     resized_img = original_img.resize((width, height))
     return ImageTk.PhotoImage(resized_img)
 
@@ -164,9 +171,9 @@ def multishot():
 
 
 def buy_heart():
-    global lives, score
+    global lives, score, scale_y, scale_x
 
-    if score > 150 and lives < 4:
+    if score >= 150 and lives < 4:
         score -= 150
         lives += 1
 
@@ -174,11 +181,12 @@ def buy_heart():
         canvas.delete("hearts")
 
         for life in range(lives):
-            canvas.create_image(1200 + 100 * life, 700, image=heart, anchor="center", tags="hearts")
+            canvas.create_image(1200 * scale_x + (100 * scale_x) * life, 650 * scale_y, image=heart,
+                                anchor="center", tags="hearts")
 
 
 def take_life():
-    global lives, heart, score
+    global lives, heart, score, scale_y, scale_x
     lives -= 1
     if lives <= 0:
         create_endgame_label()
@@ -190,19 +198,19 @@ def take_life():
 
     for life in range(lives):
 
-        heart_img = canvas.create_image(1200 + 100*life, 700, image=heart, anchor="center", tags="hearts")
+        heart_img = canvas.create_image(1200 * scale_x + (100 * scale_x) * life, 650 * scale_y, image=heart,
+                                        anchor="center", tags="hearts")
         hearts.append(heart_img)
 
 
 def score_label(add):
-    global score
-    global score_label_obj
+    global score, score_label_obj, scale_x, scale_y
     score += add
 
     if not score_label_obj:
         score_label_obj = Label(window, text=f"Score: {score}", font=("Press Start 2P", 20, "bold"), foreground="red",
                                 background="black")
-        score_label_obj.place(x=1240, y=0)
+        score_label_obj.place(x=(1240 * scale_x), y=0)
     else:
         score_label_obj.config(text=f"Score: {score}")
 
@@ -214,13 +222,21 @@ def item_exists(canvas, item_id):
 def player_pos(event):
     global player_x, player_y, battleship_sprite
 
-    player_x = event.x_root
-    player_y = event.y_root
+    canvas_x = canvas.winfo_width()
+    canvas_y = canvas.winfo_height()
+
+    event_x = event.x_root
+    event_y = event.y_root
+
+    player_x = event_x - canvas.winfo_rootx()
+    player_y = event_y - canvas.winfo_rooty()
 
     """   canvas.create_line(event.x - 50, event.y, event.x + 50, event.y, width=20, tags="player")
     canvas.create_line(event.x, event.y - 50, event.x + 50, event.y, width=20, tags="player")
     canvas.create_line(event.x, event.y - 50, event.x - 50, event.y, width=20, tags="player")
     """
+
+
 
     if battleship_sprite is None:
         battleship_sprite = canvas.create_image(player_x, player_y, image=battleship, anchor="center",
@@ -230,7 +246,7 @@ def player_pos(event):
 
 
 def shoot(event):
-    global multishot_state, can_shoot, shot_cd
+    global multishot_state, can_shoot, shot_cd, scale_x, scale_y
 
     if not can_shoot:
         return
@@ -240,9 +256,9 @@ def shoot(event):
 
     offsets = [-10, 10] if multishot_state else [0]
     for offset in offsets:
-        projectile = canvas.create_line(player_x + offset, player_y, player_x + offset, player_y - 20, width=10,
-                                        fill="white", tags="projectile")
-        move_projectile(projectile, 0, -30)
+        projectile = canvas.create_line(player_x + offset, player_y, player_x + offset, player_y - 20 * scale_y,
+                                        width=10, fill="white", tags="projectile")
+        move_projectile(projectile, 0, -30 * scale_y)
 
 
 def reset_cooldown():
@@ -253,6 +269,9 @@ def reset_cooldown():
 def move_projectile(projectile, x, y):
     if not item_exists(canvas, projectile):
         return
+    cord = canvas.coords(projectile)
+    if cord[1] < 0:
+        canvas.delete(projectile)
 
     canvas.move(projectile, x, y)
     canvas.after(16, move_projectile, projectile, x, y)  # 60 FPS
@@ -266,9 +285,9 @@ def move_enemy(enemy, x, y):
     move_mult = random.randint(1, 10)
 
     if move_mult == 1:
-        canvas.after(50, move_enemy, enemy, x + 5, y)
+        canvas.after(50, move_enemy, enemy, x + 5 * scale_x, y)
     elif move_mult == 2:
-        canvas.after(50, move_enemy, enemy, x - 5, y)
+        canvas.after(50, move_enemy, enemy, x - 5 * scale_x, y)
     else:
         canvas.after(50, move_enemy, enemy, x, y)
 
@@ -295,7 +314,7 @@ def create_basic_enemy(count):
     if game_over or not spawning_active:
         return
 
-    x_spawn = random.randint(250, 1150)
+    x_spawn = random.randint(int(250*scale_x), int(1150*scale_x))
     y_spawn = 0
 
     basic_enemy_sprite = canvas.create_image(x_spawn, y_spawn, image=basic_enemy_alien, anchor="center",
@@ -331,7 +350,7 @@ def create_targeting_enemy(count):
     if game_over or not spawning_active:
         return
 
-    x_spawn = random.randint(250, 1150)
+    x_spawn = random.randint(int(250*scale_x), int(1150*scale_x))
     y_spawn = 0
 
     targeting_enemy_sprite = canvas.create_image(x_spawn, y_spawn, image=targeting_enemy_img, anchor="center",
@@ -379,7 +398,7 @@ def create_endgame_label():
     global game_over, endgame_label
     game_over = True
     endgame_label = Label(window, foreground="black", background="red", text="YOU LOST", font=("Arial", 80, "bold"))
-    endgame_label.place(x=500, y=300)
+    endgame_label.place(x=500*scale_x, y=300*scale_y)
     canvas.delete("enemy")
     canvas.delete("projectile")
 
@@ -402,14 +421,14 @@ def get_enemy_cord():
 def check_enemy(enemy_list, width, height):
     for enemy in enemy_list[:]:
         enemy_cords = canvas.coords(enemy)
-        if len(enemy_cords) >= 2 and enemy_cords[1] >= 550:
+        if len(enemy_cords) >= 2 and enemy_cords[1] >= 550*scale_y:
             canvas.delete(enemy)
             if enemy in enemy_list:
                 enemy_list.remove(enemy)
             take_life()
             continue
 
-        if len(enemy_cords) >= 2 and (enemy_cords[0] > 1200 or enemy_cords[0] < 150):
+        if len(enemy_cords) >= 2 and (enemy_cords[0] > 1200*scale_x or enemy_cords[0] < 150*scale_x):
             canvas.delete(enemy)
             if enemy in enemy_list:
                 enemy_list.remove(enemy)
@@ -486,7 +505,7 @@ def check_boss_enemy(enemy_list, width, height):
                     canvas.after(100, delete_explosion)
                     continue
 
-                if bomb_cords[1] > 550:
+                if bomb_cords[1] > 550 * scale_y:
                     create_explosion(bomb_cords[0], bomb_cords[1])
                     explosion_center = canvas.coords(bomb)
                     explosion_cords = center_to_box(explosion_center[0], explosion_center[1], 200, 200)
@@ -517,11 +536,11 @@ def create_hp_bar(hp_list):
         cords = canvas.coords(boss_enemy_sprite)
 
         if len(cords) > 0:
-            hp_x_start = cords[0] - 100
-            hp_y_start = cords[1] - 100
-            hp_x_end_green = (cords[0] - 100) + (10*len(hp_list))
-            hp_x_end_red = cords[0] + 100
-            hp_y_end = cords[1] - 100
+            hp_x_start = cords[0] - 100 * scale_x
+            hp_y_start = cords[1] - 100 * scale_y
+            hp_x_end_green = (cords[0] - 100) + (10*len(hp_list)) * scale_x
+            hp_x_end_red = cords[0] + 100 * scale_x
+            hp_y_end = cords[1] - 100 * scale_y
 
 
 
@@ -560,7 +579,8 @@ def line_to_box(line):
 
 
 def clear_canvas():
-    global targeting_enemy_loop, basic_enemy_loop, spawning_active, after_calls, boss_enemy_sprite, lvl5_hp
+    global targeting_enemy_loop, basic_enemy_loop, spawning_active, after_calls, boss_enemy_sprite, lvl5_hp, scale_y,\
+        scale_x
     canvas.delete("projectile")
     canvas.delete("enemy")
     canvas.delete("hp_bar")
@@ -575,7 +595,7 @@ def clear_canvas():
     after_calls.clear()
     spawning_active = False
     for life in range(lives):
-        heart_img = canvas.create_image(1200 + 100*life, 700, image=heart, anchor="center", tags="hearts")
+        heart_img = canvas.create_image(1200 * scale_x + (100 * life * scale_x), 650 * scale_y, image=heart, anchor="center", tags="hearts")
 
 
 def lvl1():
@@ -677,7 +697,7 @@ def move_boss(boss, x, y):
         boss_attack = 0
         boss_bomb(boss_cords[0], boss_cords[1])
 
-    midpoint = 700
+    midpoint = 700*scale_x
     bias_left = False
 
     boss_timer -= 1
@@ -685,9 +705,9 @@ def move_boss(boss, x, y):
         if boss_x >= midpoint:
             bias_left = True
         if bias_left:
-            boss_direction = -7 if prob < 0.75 else 7
+            boss_direction = -7*scale_x if prob < 0.75 else 7*scale_x
         elif not bias_left:
-            boss_direction = 7 if prob < 0.75 else -7
+            boss_direction = 7*scale_x if prob < 0.75 else -7*scale_x
 
         boss_timer = random.randint(20, 60)
 
@@ -702,7 +722,7 @@ def move_boss(boss, x, y):
 
 
 
-    if boss_x > 1200 or boss_x < 300:
+    if boss_x > 1200*scale_x or boss_x < 300*scale_x:
         boss_direction *= -1
 
     canvas.after(50, move_boss, boss, boss_direction, y)
