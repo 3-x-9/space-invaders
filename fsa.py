@@ -43,7 +43,7 @@ class GameState:
 
         self.after_calls = []
 
-        self.score = 1000
+        self.score = 100
         self.lives = 3
         self.game_over = False
 
@@ -161,20 +161,20 @@ class GameState:
             self.score_label.config(text=f"SCORE:{self.score}")
             self.shot_cd_button.config(text=f"Shot CD ({self.shot_cd_counter})")
 
-    def spawn_enemy(self):
-        if not self.game_over:
+    def spawn_enemy(self, counter):
+        if not self.game_over and counter > 0:
             x = random.randint((self.screen_width//10*3), (self.screen_width//10*7))
             enemy = Enemy(self, x, 0)
             self.enemies.append(enemy)
-            call = self.canvas.after(1000, self.spawn_enemy)
+            call = self.canvas.after(500, self.spawn_enemy, counter - 1)
             self.after_calls.append(call)
 
-    def spawn_targeting_enemy(self):
-        if not self.game_over:
+    def spawn_targeting_enemy(self, counter):
+        if not self.game_over and counter > 0:
             x = random.randint((self.screen_width//10*3), (self.screen_width//10*7))
             enemy = TargetingEnemy(self, x, 0)
             self.enemies.append(enemy)
-            call = self.canvas.after(1000, self.spawn_targeting_enemy)
+            call = self.canvas.after(500, self.spawn_targeting_enemy, counter - 1)
             self.after_calls.append(call)
 
     def spawn_boss(self):
@@ -189,37 +189,49 @@ class GameState:
                                      image=self.heart_img, tags="hearts")
 
     def lvl1(self):
-        if self.lives < 1:
-            self.lives = 2
-            self.update_hearts()
-        self.clear_canvas()
-        self.spawn_enemy()
+            if self.lives < 1:
+                self.lives = 2
+                self.update_hearts()
+            self.clear_canvas()
+            self.spawn_enemy(10)
 
     def lvl2(self):
-        if self.lives < 1:
-            self.lives = 2
-            self.update_hearts()
-        self.clear_canvas()
-        self.spawn_targeting_enemy()
+        if self.score >= 100:
+            self.score -= 25
+            if self.lives < 1:
+                self.lives = 2
+                self.update_hearts()
+            self.clear_canvas()
+            self.spawn_targeting_enemy(10)
 
     def lvl3(self):
-        if self.lives < 1:
-            self.lives = 2
-            self.update_hearts()
-        self.clear_canvas()
+        if self.score >= 100:
+            self.score -= 50
+            if self.lives < 1:
+                self.lives = 2
+                self.update_hearts()
+            self.clear_canvas()
+            self.spawn_enemy(5)
+            self.spawn_targeting_enemy(5)
 
     def lvl4(self):
-        if self.lives < 1:
-            self.lives = 2
-            self.update_hearts()
-        self.clear_canvas()
+        if self.score >= 100:
+            self.score -= 50
+            if self.lives < 1:
+                self.lives = 2
+                self.update_hearts()
+            self.clear_canvas()
+            self.spawn_enemy(10)
+            self.spawn_targeting_enemy(10)
 
     def lvl5(self):
-        if self.lives < 1:
-            self.lives = 2
-            self.update_hearts()
-        self.clear_canvas()
-        self.spawn_boss()
+        if self.score >= 100:
+            self.score -= 100
+            if self.lives < 1:
+                self.lives = 2
+                self.update_hearts()
+            self.clear_canvas()
+            self.spawn_boss()
 
     def clear_canvas(self):
         self.game_over = False
@@ -393,8 +405,8 @@ class BossEnemy:
         self.sprite = self.canvas.create_image(self.x, self.y, image=self.game.boss_img, anchor="center", tags="enemy")
         self.boss_attack = 0
         self.boss_timer = 0
-        self.max_health = 20
-        self.health = 20
+        self.max_health = 40
+        self.health = 40
         self.move_boss(0)
 
 
@@ -440,11 +452,11 @@ class BossEnemy:
         if self.canvas.find_withtag("boss_bar"):
             self.canvas.delete("boss_bar")
 
-        self.canvas.create_line(self.x - self.max_health/2*10, self.y - self.game.screen_height/10,
-                                self.x + self.max_health/2*10, self.y - self.game.screen_height/10, fill="red",
+        self.canvas.create_line(self.x - self.max_health/2*(200/self.max_health), self.y - self.game.screen_height/10,
+                                self.x + self.max_health/2*(200/self.max_health), self.y - self.game.screen_height/10, fill="red",
                                 width=5, tags="boss_bar")
-        self.canvas.create_line(self.x - self.max_health/2*10, self.y - self.game.screen_height/10,
-                                self.x - self.max_health/2*10 + self.health*10,
+        self.canvas.create_line(self.x - self.max_health/2*(200/self.max_health), self.y - self.game.screen_height/10,
+                                self.x - self.max_health/2*(200/self.max_health) + self.health*(200/self.max_health),
                                 self.y - self.game.screen_height/10, fill="green", width=5, tags="boss_bar")
 
     def take_hp(self):
