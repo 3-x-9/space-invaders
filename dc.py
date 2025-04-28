@@ -711,21 +711,11 @@ def move_boss(boss, x, y):
 
         boss_timer = random.randint(20, 60)
 
-
-
-
-
-
-
-
-
-
-
-
     if boss_x > 1200*scale_x or boss_x < 300*scale_x:
         boss_direction *= -1
 
     canvas.after(50, move_boss, boss, boss_direction, y)
+
 
 def boss_bomb(x, y):
     global bomb_img, boss_bomb_sprite, boss_bomb_sprites
